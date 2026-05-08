@@ -380,6 +380,7 @@ export default {
     channelPricing: 'Channel Pricing',
     channelMonitor: 'Channel Monitor',
     channelStatus: 'Channel Status',
+    poolHealth: 'Pool Health',
   },
 
   // Auth
@@ -2674,6 +2675,54 @@ export default {
           description: 'Description',
           descriptionPlaceholder: 'Optional: what this template is for, capture date, etc.'
         }
+      }
+    },
+
+    // Pool Health Monitor
+    poolHealth: {
+      kicker: 'OpenAI / Codex',
+      title: 'Account Pool Health',
+      description: 'Review admin pool capacity, schedulable accounts, rate limits, and Codex 5h/7d usage snapshots.',
+      refresh: 'Refresh',
+      lastUpdated: 'Updated',
+      searchPlaceholder: 'Search pools...',
+      allHealth: 'All statuses',
+      snapshotHint: 'Using the pool health snapshot endpoint. Account details stay in Account Management.',
+      codex5h: '5h window',
+      codex7d: '7d window',
+      noPoolDescription: 'No pool description',
+      neverUsed: 'Never used',
+      loadFailed: 'Failed to load pool health data',
+      accountDetails: 'Account details',
+      selectPoolHint: 'Select a pool above, then open Account Management to view accounts.',
+      openAccounts: 'Open accounts',
+      selectedPoolSubtitle: '{total} accounts, {schedulable} schedulable, {problem} need attention.',
+      emptyTitle: 'No pool data',
+      emptyDescription: 'There are no OpenAI pools to display.',
+      noAccountsTitle: 'View accounts from Account Management',
+      noAccountsDescription: 'The snapshot endpoint returns pool summaries only. Select a pool, then use Account Management for account-level details.',
+      rateLimitedCount: '{count} rate limited',
+      summary: {
+        pools: 'Pools',
+        poolsHint: '{total} OpenAI/Codex accounts',
+        schedulable: 'Schedulable',
+        activeHint: '{active} active accounts',
+        problem: 'Needs attention',
+        rateLimitedHint: '{count} rate limited',
+        codexUsage: 'Codex usage',
+        codexUsageHint: 'Average 5h / 7d utilization'
+      },
+      metrics: {
+        total: 'Total',
+        active: 'Active',
+        schedulable: 'Ready',
+        problem: 'Issues'
+      },
+      health: {
+        healthy: 'Healthy',
+        warning: 'Warning',
+        critical: 'Critical',
+        empty: 'Empty'
       }
     },
 
