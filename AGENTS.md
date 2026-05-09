@@ -85,6 +85,15 @@ The controller agent is responsible for coordination:
 - Use test-driven development for code behavior changes whenever practical.
 - Write or update tests before production code for new behavior.
 - Run development verification locally before handoff.
+- Reuse persistent local Go caches for Pixel work instead of temporary `/private/tmp` caches:
+  - `GOCACHE=/Users/beetle/Desktop/code/Pixel/.go-cache/build`
+  - `GOMODCACHE=/Users/beetle/Desktop/code/Pixel/.go-cache/mod`
+  - `GOPROXY=https://goproxy.cn,direct`
+  - `GOTOOLCHAIN=local`
+  - `CGO_ENABLED=0` for targeted local tests unless a test explicitly requires cgo.
+- Prefer the project wrapper `./tools/go-local` for Go commands; it sets the cache and toolchain environment consistently, for example `../tools/go-local test ./internal/service -run TestName -count=1` from `backend/`.
+- Use the local Go binary at `/Users/beetle/.local/go/bin/go`; do not install Go or download temporary Go toolchains for normal Pixel development.
+- Do not set `GOCACHE` or `GOMODCACHE` to `/private/tmp` for normal Pixel development because those caches are not durable and cause repeated dependency downloads.
 - In this project, "local development environment" means the local repository or local feature worktree, not the production server runtime directory.
 - Local development tests are allowed by default when they are scoped, reproducible, and do not mutate production data.
 - Allowed by default locally:

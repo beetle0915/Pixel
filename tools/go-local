@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+export GOCACHE="$ROOT/.go-cache/build"
+export GOMODCACHE="$ROOT/.go-cache/mod"
+export GOPROXY="${GOPROXY:-https://goproxy.cn,direct}"
+export GOTOOLCHAIN="${GOTOOLCHAIN:-local}"
+export CGO_ENABLED="${CGO_ENABLED:-0}"
+
+mkdir -p "$GOCACHE" "$GOMODCACHE"
+exec /Users/beetle/.local/go/bin/go "$@"
