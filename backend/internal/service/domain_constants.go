@@ -189,6 +189,9 @@ const (
 	SettingKeyHideCcsImportButton         = "hide_ccs_import_button"        // 是否隐藏 API Keys 页面的导入 CCS 按钮
 	SettingKeyPurchaseSubscriptionEnabled = "purchase_subscription_enabled" // 是否展示"购买订阅"页面入口
 	SettingKeyPurchaseSubscriptionURL     = "purchase_subscription_url"     // "购买订阅"页面 URL（作为 iframe src）
+	SettingKeySelfServiceCardEnabled      = "self_service_card_enabled"     // 是否展示用户侧"自主购卡"外链入口
+	SettingKeySelfServiceCardLabel        = "self_service_card_label"       // "自主购卡"菜单文案
+	SettingKeySelfServiceCardURL          = "self_service_card_url"         // "自主购卡"外部跳转 URL
 	SettingKeyTableDefaultPageSize        = "table_default_page_size"       // 表格默认每页条数
 	SettingKeyTablePageSizeOptions        = "table_page_size_options"       // 表格可选每页条数（JSON 数组）
 	SettingKeyCustomMenuItems             = "custom_menu_items"             // 自定义菜单项（JSON 数组）
@@ -361,6 +364,11 @@ const (
 
 	// Web Search Emulation
 	SettingKeyWebSearchEmulationConfig = "web_search_emulation_config" // JSON 配置
+)
+
+const (
+	DefaultSelfServiceCardLabel = "自主购卡"
+	DefaultSelfServiceCardURL   = "https://pay.ldxp.cn/shop/OTOKMA5D"
 )
 
 // AdminAPIKeyPrefix is the prefix for admin API keys (distinct from user "sk-" keys).

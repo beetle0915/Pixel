@@ -196,6 +196,11 @@ export interface PublicSettings {
   doc_url: string
   home_content: string
   hide_ccs_import_button: boolean
+  self_service_card_enabled: boolean
+  self_service_card_label: string
+  self_service_card_url: string
+  purchase_subscription_enabled: boolean
+  purchase_subscription_url: string
   payment_enabled: boolean
   table_default_page_size: number
   table_page_size_options: number[]
@@ -213,6 +218,7 @@ export interface PublicSettings {
   balance_low_notify_enabled: boolean
   account_quota_notify_enabled: boolean
   balance_low_notify_threshold: number
+  balance_low_notify_recharge_url: string
   channel_monitor_enabled: boolean
   channel_monitor_default_interval_seconds: number
   available_channels_enabled: boolean

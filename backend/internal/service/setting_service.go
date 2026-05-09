@@ -423,6 +423,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyHideCcsImportButton,
 		SettingKeyPurchaseSubscriptionEnabled,
 		SettingKeyPurchaseSubscriptionURL,
+		SettingKeySelfServiceCardEnabled,
+		SettingKeySelfServiceCardLabel,
+		SettingKeySelfServiceCardURL,
 		SettingKeyTableDefaultPageSize,
 		SettingKeyTablePageSizeOptions,
 		SettingKeyCustomMenuItems,
@@ -521,6 +524,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		HideCcsImportButton:              settings[SettingKeyHideCcsImportButton] == "true",
 		PurchaseSubscriptionEnabled:      settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
 		PurchaseSubscriptionURL:          strings.TrimSpace(settings[SettingKeyPurchaseSubscriptionURL]),
+		SelfServiceCardEnabled:           s.getBoolIfPresentOrDefault(settings, SettingKeySelfServiceCardEnabled, true),
+		SelfServiceCardLabel:             strings.TrimSpace(s.getStringOrDefault(settings, SettingKeySelfServiceCardLabel, DefaultSelfServiceCardLabel)),
+		SelfServiceCardURL:               strings.TrimSpace(s.getStringIfPresentOrDefault(settings, SettingKeySelfServiceCardURL, DefaultSelfServiceCardURL)),
 		TableDefaultPageSize:             tableDefaultPageSize,
 		TablePageSizeOptions:             tablePageSizeOptions,
 		CustomMenuItems:                  settings[SettingKeyCustomMenuItems],
@@ -666,6 +672,9 @@ type PublicSettingsInjectionPayload struct {
 	HideCcsImportButton              bool            `json:"hide_ccs_import_button"`
 	PurchaseSubscriptionEnabled      bool            `json:"purchase_subscription_enabled"`
 	PurchaseSubscriptionURL          string          `json:"purchase_subscription_url"`
+	SelfServiceCardEnabled           bool            `json:"self_service_card_enabled"`
+	SelfServiceCardLabel             string          `json:"self_service_card_label"`
+	SelfServiceCardURL               string          `json:"self_service_card_url"`
 	TableDefaultPageSize             int             `json:"table_default_page_size"`
 	TablePageSizeOptions             []int           `json:"table_page_size_options"`
 	CustomMenuItems                  json.RawMessage `json:"custom_menu_items"`
@@ -722,6 +731,9 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		HideCcsImportButton:              settings.HideCcsImportButton,
 		PurchaseSubscriptionEnabled:      settings.PurchaseSubscriptionEnabled,
 		PurchaseSubscriptionURL:          settings.PurchaseSubscriptionURL,
+		SelfServiceCardEnabled:           settings.SelfServiceCardEnabled,
+		SelfServiceCardLabel:             settings.SelfServiceCardLabel,
+		SelfServiceCardURL:               settings.SelfServiceCardURL,
 		TableDefaultPageSize:             settings.TableDefaultPageSize,
 		TablePageSizeOptions:             settings.TablePageSizeOptions,
 		CustomMenuItems:                  filterUserVisibleMenuItems(settings.CustomMenuItems),
@@ -1158,6 +1170,9 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	updates[SettingKeyHideCcsImportButton] = strconv.FormatBool(settings.HideCcsImportButton)
 	updates[SettingKeyPurchaseSubscriptionEnabled] = strconv.FormatBool(settings.PurchaseSubscriptionEnabled)
 	updates[SettingKeyPurchaseSubscriptionURL] = strings.TrimSpace(settings.PurchaseSubscriptionURL)
+	updates[SettingKeySelfServiceCardEnabled] = strconv.FormatBool(settings.SelfServiceCardEnabled)
+	updates[SettingKeySelfServiceCardLabel] = strings.TrimSpace(settings.SelfServiceCardLabel)
+	updates[SettingKeySelfServiceCardURL] = strings.TrimSpace(settings.SelfServiceCardURL)
 	tableDefaultPageSize, tablePageSizeOptions := normalizeTablePreferences(
 		settings.TableDefaultPageSize,
 		settings.TablePageSizeOptions,
@@ -1830,6 +1845,9 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeySiteLogo:                                 "",
 		SettingKeyPurchaseSubscriptionEnabled:              "false",
 		SettingKeyPurchaseSubscriptionURL:                  "",
+		SettingKeySelfServiceCardEnabled:                   "true",
+		SettingKeySelfServiceCardLabel:                     DefaultSelfServiceCardLabel,
+		SettingKeySelfServiceCardURL:                       DefaultSelfServiceCardURL,
 		SettingKeyTableDefaultPageSize:                     "20",
 		SettingKeyTablePageSizeOptions:                     "[10,20,50,100]",
 		SettingKeyCustomMenuItems:                          "[]",
@@ -1982,6 +2000,9 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		HideCcsImportButton:              settings[SettingKeyHideCcsImportButton] == "true",
 		PurchaseSubscriptionEnabled:      settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
 		PurchaseSubscriptionURL:          strings.TrimSpace(settings[SettingKeyPurchaseSubscriptionURL]),
+		SelfServiceCardEnabled:           s.getBoolIfPresentOrDefault(settings, SettingKeySelfServiceCardEnabled, true),
+		SelfServiceCardLabel:             strings.TrimSpace(s.getStringOrDefault(settings, SettingKeySelfServiceCardLabel, DefaultSelfServiceCardLabel)),
+		SelfServiceCardURL:               strings.TrimSpace(s.getStringIfPresentOrDefault(settings, SettingKeySelfServiceCardURL, DefaultSelfServiceCardURL)),
 		CustomMenuItems:                  settings[SettingKeyCustomMenuItems],
 		CustomEndpoints:                  settings[SettingKeyCustomEndpoints],
 		BackendModeEnabled:               settings[SettingKeyBackendModeEnabled] == "true",
@@ -2527,6 +2548,20 @@ func normalizeTablePreferences(defaultPageSize int, options []int) (int, []int) 
 func (s *SettingService) getStringOrDefault(settings map[string]string, key, defaultValue string) string {
 	if value, ok := settings[key]; ok && value != "" {
 		return value
+	}
+	return defaultValue
+}
+
+func (s *SettingService) getStringIfPresentOrDefault(settings map[string]string, key, defaultValue string) string {
+	if value, ok := settings[key]; ok {
+		return value
+	}
+	return defaultValue
+}
+
+func (s *SettingService) getBoolIfPresentOrDefault(settings map[string]string, key string, defaultValue bool) bool {
+	if value, ok := settings[key]; ok {
+		return value == "true"
 	}
 	return defaultValue
 }

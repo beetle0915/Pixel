@@ -370,6 +370,7 @@ export default {
     mySubscriptions: 'My Subscriptions',
     buySubscription: 'Recharge / Subscription',
     docs: 'Docs',
+    selfServiceCard: 'Self-Service Cards',
     myOrders: 'My Orders',
     orderManagement: 'Orders',
     paymentDashboard: 'Payment Dashboard',
@@ -5489,7 +5490,16 @@ export default {
         homeContentHint: 'Customize the home page content. Supports Markdown/HTML. If you enter a URL (starting with http:// or https://), it will be used as an iframe src to embed an external page. When set, the default status information will no longer be displayed.',
         homeContentIframeWarning: '⚠️ iframe mode note: Some websites have X-Frame-Options or CSP security policies that prevent embedding in iframes. If the page appears blank or shows an error, please verify the target website allows embedding, or consider using HTML mode to build your own content.',
         hideCcsImportButton: 'Hide CCS Import Button',
-        hideCcsImportButtonHint: 'When enabled, the "Import to CCS" button will be hidden on the API Keys page'
+        hideCcsImportButtonHint: 'When enabled, the "Import to CCS" button will be hidden on the API Keys page',
+        selfServiceCardTitle: 'Self-Service Cards',
+        selfServiceCardDescription: 'Show an external card purchase entry in the user sidebar and open it in a new tab.',
+        selfServiceCardEnabled: 'Show self-service card entry',
+        selfServiceCardEnabledHint: 'When disabled, this entry is hidden for regular users and admin personal navigation.',
+        selfServiceCardLabel: 'Menu label',
+        selfServiceCardLabelPlaceholder: 'Self-Service Cards',
+        selfServiceCardUrl: 'Card purchase URL',
+        selfServiceCardUrlPlaceholder: 'https://pay.ldxp.cn/shop/OTOKMA5D',
+        selfServiceCardUrlHint: 'Users open this link in a new browser tab from the sidebar.'
       },
       purchase: {
         title: 'Recharge / Subscription Page',

@@ -49,4 +49,15 @@ describe('AppSidebar user navigation', () => {
     expect(adminNavItemsBlock).toContain("path: '/admin/channels/monitor'")
     expect(adminNavItemsBlock).toContain("path: '/admin/subscriptions'")
   })
+
+  it('adds the configured self-service card entry as an external user link', () => {
+    expect(componentSource).toContain('externalUrl?: string')
+    expect(componentSource).toContain('selfServiceCardNavItem')
+    expect(componentSource).toContain('self_service_card_enabled')
+    expect(componentSource).toContain('self_service_card_label')
+    expect(componentSource).toContain('self_service_card_url')
+    expect(componentSource).toContain('target="_blank"')
+    expect(componentSource).toContain('rel="noopener noreferrer"')
+    expect(buildSelfNavItemsBlock).toContain('selfServiceCardNavItem.value')
+  })
 })

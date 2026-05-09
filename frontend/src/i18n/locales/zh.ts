@@ -370,6 +370,7 @@ export default {
     mySubscriptions: '我的订阅',
     buySubscription: '充值/订阅',
     docs: '文档',
+    selfServiceCard: '自主购卡',
     myOrders: '我的订单',
     orderManagement: '订单管理',
     paymentDashboard: '支付概览',
@@ -5650,7 +5651,16 @@ export default {
         homeContentIframeWarning:
           '⚠️ iframe 模式提示：部分网站设置了 X-Frame-Options 或 CSP 安全策略，禁止被嵌入到 iframe 中。如果页面显示空白或报错，请确认目标网站允许被嵌入，或考虑使用 HTML 模式自行构建页面内容。',
         hideCcsImportButton: '隐藏 CCS 导入按钮',
-        hideCcsImportButtonHint: '启用后将在 API Keys 页面隐藏"导入 CCS"按钮'
+        hideCcsImportButtonHint: '启用后将在 API Keys 页面隐藏"导入 CCS"按钮',
+        selfServiceCardTitle: '自主购卡',
+        selfServiceCardDescription: '用户侧边栏展示外部购卡入口，点击后在新标签页打开。',
+        selfServiceCardEnabled: '显示自主购卡入口',
+        selfServiceCardEnabledHint: '关闭后普通用户和管理员个人区都会隐藏该入口。',
+        selfServiceCardLabel: '菜单文案',
+        selfServiceCardLabelPlaceholder: '自主购卡',
+        selfServiceCardUrl: '购卡链接',
+        selfServiceCardUrlPlaceholder: 'https://pay.ldxp.cn/shop/OTOKMA5D',
+        selfServiceCardUrlHint: '用户点击菜单后会在新标签页打开此链接。'
       },
       purchase: {
         title: '充值/订阅页面',

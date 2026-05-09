@@ -3900,6 +3900,59 @@
                 </p>
               </div>
 
+              <!-- Self-Service Card Link -->
+              <div
+                class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+              >
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 class="font-medium text-gray-900 dark:text-white">
+                      {{ t("admin.settings.site.selfServiceCardTitle") }}
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.selfServiceCardDescription") }}
+                    </p>
+                  </div>
+                  <Toggle v-model="form.self_service_card_enabled" />
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.site.selfServiceCardEnabledHint") }}
+                </p>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.selfServiceCardLabel") }}
+                    </label>
+                    <input
+                      v-model="form.self_service_card_label"
+                      data-testid="self-service-card-label"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.settings.site.selfServiceCardLabelPlaceholder')"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      {{ t("admin.settings.site.selfServiceCardUrl") }}
+                    </label>
+                    <input
+                      v-model="form.self_service_card_url"
+                      data-testid="self-service-card-url"
+                      type="url"
+                      class="input font-mono text-sm"
+                      :placeholder="t('admin.settings.site.selfServiceCardUrlPlaceholder')"
+                    />
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t("admin.settings.site.selfServiceCardUrlHint") }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <!-- Site Logo Upload -->
               <div>
                 <label
@@ -5795,6 +5848,9 @@ const form = reactive<SettingsForm>({
   home_content: "",
   backend_mode_enabled: false,
   hide_ccs_import_button: false,
+  self_service_card_enabled: true,
+  self_service_card_label: "自主购卡",
+  self_service_card_url: "https://pay.ldxp.cn/shop/OTOKMA5D",
   payment_enabled: false,
   payment_min_amount: 1,
   payment_max_amount: 10000,
@@ -6709,6 +6765,7 @@ async function saveSettings() {
     // Optional URL fields: auto-clear invalid values so they don't cause backend 400 errors
     if (!isValidHttpUrl(form.frontend_url)) form.frontend_url = "";
     if (!isValidHttpUrl(form.doc_url)) form.doc_url = "";
+    if (!isValidHttpUrl(form.self_service_card_url)) form.self_service_card_url = "";
     syncWeChatConnectMode();
     const wechatStoredMode = deriveWeChatConnectStoredMode(
       form.wechat_connect_open_enabled,
@@ -6764,6 +6821,9 @@ async function saveSettings() {
       home_content: form.home_content,
       backend_mode_enabled: form.backend_mode_enabled,
       hide_ccs_import_button: form.hide_ccs_import_button,
+      self_service_card_enabled: form.self_service_card_enabled,
+      self_service_card_label: form.self_service_card_label.trim() || "自主购卡",
+      self_service_card_url: form.self_service_card_url.trim(),
       table_default_page_size: form.table_default_page_size,
       table_page_size_options: form.table_page_size_options,
       custom_menu_items: form.custom_menu_items,

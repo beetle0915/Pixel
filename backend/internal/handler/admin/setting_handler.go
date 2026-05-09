@@ -179,6 +179,9 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		HideCcsImportButton:                    settings.HideCcsImportButton,
 		PurchaseSubscriptionEnabled:            settings.PurchaseSubscriptionEnabled,
 		PurchaseSubscriptionURL:                settings.PurchaseSubscriptionURL,
+		SelfServiceCardEnabled:                 settings.SelfServiceCardEnabled,
+		SelfServiceCardLabel:                   settings.SelfServiceCardLabel,
+		SelfServiceCardURL:                     settings.SelfServiceCardURL,
 		TableDefaultPageSize:                   settings.TableDefaultPageSize,
 		TablePageSizeOptions:                   settings.TablePageSizeOptions,
 		CustomMenuItems:                        dto.ParseCustomMenuItems(settings.CustomMenuItems),
@@ -384,6 +387,9 @@ type UpdateSettingsRequest struct {
 	HideCcsImportButton         bool                  `json:"hide_ccs_import_button"`
 	PurchaseSubscriptionEnabled *bool                 `json:"purchase_subscription_enabled"`
 	PurchaseSubscriptionURL     *string               `json:"purchase_subscription_url"`
+	SelfServiceCardEnabled      *bool                 `json:"self_service_card_enabled"`
+	SelfServiceCardLabel        *string               `json:"self_service_card_label"`
+	SelfServiceCardURL          *string               `json:"self_service_card_url"`
 	TableDefaultPageSize        int                   `json:"table_default_page_size"`
 	TablePageSizeOptions        []int                 `json:"table_page_size_options"`
 	CustomMenuItems             *[]dto.CustomMenuItem `json:"custom_menu_items"`
@@ -970,6 +976,37 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		}
 	}
 
+	selfServiceCardEnabled := previousSettings.SelfServiceCardEnabled
+	if req.SelfServiceCardEnabled != nil {
+		selfServiceCardEnabled = *req.SelfServiceCardEnabled
+	}
+	selfServiceCardLabel := previousSettings.SelfServiceCardLabel
+	if req.SelfServiceCardLabel != nil {
+		selfServiceCardLabel = strings.TrimSpace(*req.SelfServiceCardLabel)
+	}
+	if selfServiceCardLabel == "" {
+		selfServiceCardLabel = service.DefaultSelfServiceCardLabel
+	}
+	selfServiceCardURL := previousSettings.SelfServiceCardURL
+	if req.SelfServiceCardURL != nil {
+		selfServiceCardURL = strings.TrimSpace(*req.SelfServiceCardURL)
+	}
+	if selfServiceCardEnabled {
+		if selfServiceCardURL == "" {
+			response.BadRequest(c, "Self-Service Card URL is required when enabled")
+			return
+		}
+		if err := config.ValidateAbsoluteHTTPURL(selfServiceCardURL); err != nil {
+			response.BadRequest(c, "Self-Service Card URL must be an absolute http(s) URL")
+			return
+		}
+	} else if selfServiceCardURL != "" {
+		if err := config.ValidateAbsoluteHTTPURL(selfServiceCardURL); err != nil {
+			response.BadRequest(c, "Self-Service Card URL must be an absolute http(s) URL")
+			return
+		}
+	}
+
 	// Frontend URL 验证
 	req.FrontendURL = strings.TrimSpace(req.FrontendURL)
 	if req.FrontendURL != "" {
@@ -1220,6 +1257,9 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		HideCcsImportButton:              req.HideCcsImportButton,
 		PurchaseSubscriptionEnabled:      purchaseEnabled,
 		PurchaseSubscriptionURL:          purchaseURL,
+		SelfServiceCardEnabled:           selfServiceCardEnabled,
+		SelfServiceCardLabel:             selfServiceCardLabel,
+		SelfServiceCardURL:               selfServiceCardURL,
 		TableDefaultPageSize:             req.TableDefaultPageSize,
 		TablePageSizeOptions:             req.TablePageSizeOptions,
 		CustomMenuItems:                  customMenuJSON,
@@ -1563,6 +1603,9 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		HideCcsImportButton:                    updatedSettings.HideCcsImportButton,
 		PurchaseSubscriptionEnabled:            updatedSettings.PurchaseSubscriptionEnabled,
 		PurchaseSubscriptionURL:                updatedSettings.PurchaseSubscriptionURL,
+		SelfServiceCardEnabled:                 updatedSettings.SelfServiceCardEnabled,
+		SelfServiceCardLabel:                   updatedSettings.SelfServiceCardLabel,
+		SelfServiceCardURL:                     updatedSettings.SelfServiceCardURL,
 		TableDefaultPageSize:                   updatedSettings.TableDefaultPageSize,
 		TablePageSizeOptions:                   updatedSettings.TablePageSizeOptions,
 		CustomMenuItems:                        dto.ParseCustomMenuItems(updatedSettings.CustomMenuItems),
@@ -1974,6 +2017,15 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	}
 	if before.PurchaseSubscriptionURL != after.PurchaseSubscriptionURL {
 		changed = append(changed, "purchase_subscription_url")
+	}
+	if before.SelfServiceCardEnabled != after.SelfServiceCardEnabled {
+		changed = append(changed, "self_service_card_enabled")
+	}
+	if before.SelfServiceCardLabel != after.SelfServiceCardLabel {
+		changed = append(changed, "self_service_card_label")
+	}
+	if before.SelfServiceCardURL != after.SelfServiceCardURL {
+		changed = append(changed, "self_service_card_url")
 	}
 	if before.TableDefaultPageSize != after.TableDefaultPageSize {
 		changed = append(changed, "table_default_page_size")

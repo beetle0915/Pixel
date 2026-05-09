@@ -155,6 +155,15 @@ vi.mock("vue-i18n", async () => {
     "admin.settings.payment.findProvider": "查看支持的支付方式",
     "admin.settings.openaiExperimentalScheduler.title": "OpenAI 实验调度策略",
     "admin.settings.openaiExperimentalScheduler.description": "默认关闭。开启后仅影响本网关在 OpenAI 账号间的实验性调度选择逻辑，不代表上游 OpenAI 官方能力。",
+    "admin.settings.site.selfServiceCardTitle": "自主购卡",
+    "admin.settings.site.selfServiceCardDescription": "用户侧边栏展示外部购卡入口，点击后在新标签页打开。",
+    "admin.settings.site.selfServiceCardEnabled": "显示自主购卡入口",
+    "admin.settings.site.selfServiceCardEnabledHint": "关闭后普通用户和管理员个人区都会隐藏该入口。",
+    "admin.settings.site.selfServiceCardLabel": "菜单文案",
+    "admin.settings.site.selfServiceCardLabelPlaceholder": "自主购卡",
+    "admin.settings.site.selfServiceCardUrl": "购卡链接",
+    "admin.settings.site.selfServiceCardUrlPlaceholder": "https://pay.ldxp.cn/shop/OTOKMA5D",
+    "admin.settings.site.selfServiceCardUrlHint": "用户点击菜单后会在新标签页打开此链接。",
     "admin.settings.site.uploadImage": "上传图片",
     "admin.settings.site.remove": "移除",
   };
@@ -293,6 +302,9 @@ const baseSettingsResponse = {
   doc_url: "",
   home_content: "",
   hide_ccs_import_button: false,
+  self_service_card_enabled: true,
+  self_service_card_label: "自主购卡",
+  self_service_card_url: "https://pay.ldxp.cn/shop/OTOKMA5D",
   table_default_page_size: 20,
   table_page_size_options: [10, 20, 50, 100],
   backend_mode_enabled: false,
@@ -679,6 +691,28 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(paymentHelpImageUpload).toBeDefined();
     expect(paymentHelpImageUpload?.attributes("data-upload-label")).toBe("上传图片");
     expect(paymentHelpImageUpload?.attributes("data-remove-label")).toBe("移除");
+  });
+
+  it("renders and submits self-service card settings", async () => {
+    const wrapper = mountView();
+
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("自主购卡");
+    expect(wrapper.text()).toContain("用户侧边栏展示外部购卡入口");
+
+    await wrapper.get('[data-testid="self-service-card-label"]').setValue("自主购卡入口");
+    await wrapper.get('[data-testid="self-service-card-url"]').setValue("https://pay.example.com/shop");
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        self_service_card_enabled: true,
+        self_service_card_label: "自主购卡入口",
+        self_service_card_url: "https://pay.example.com/shop",
+      }),
+    );
   });
 });
 

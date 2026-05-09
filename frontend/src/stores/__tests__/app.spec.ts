@@ -313,6 +313,9 @@ describe('useAppStore', () => {
         doc_url: '',
         home_content: '',
         hide_ccs_import_button: false,
+        self_service_card_enabled: true,
+        self_service_card_label: '自主购卡',
+        self_service_card_url: 'https://pay.ldxp.cn/shop/OTOKMA5D',
         purchase_subscription_enabled: false,
         purchase_subscription_url: '',
         table_default_page_size: 1000,
@@ -320,7 +323,18 @@ describe('useAppStore', () => {
         custom_menu_items: [],
         custom_endpoints: [],
         linuxdo_oauth_enabled: false,
+        wechat_oauth_enabled: false,
+        oidc_oauth_enabled: false,
+        oidc_oauth_provider_name: 'OIDC',
         backend_mode_enabled: false,
+        balance_low_notify_enabled: false,
+        account_quota_notify_enabled: false,
+        balance_low_notify_threshold: 0,
+        balance_low_notify_recharge_url: '',
+        channel_monitor_enabled: true,
+        channel_monitor_default_interval_seconds: 60,
+        available_channels_enabled: false,
+        affiliate_enabled: false,
         version: '1.0.0'
       })
 

@@ -78,6 +78,33 @@ func TestSettingService_GetPublicSettings_ExposesTablePreferences(t *testing.T) 
 	require.Equal(t, []int{20, 50, 100}, settings.TablePageSizeOptions)
 }
 
+func TestSettingService_GetPublicSettings_ExposesSelfServiceCardDefaults(t *testing.T) {
+	svc := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, settings.SelfServiceCardEnabled)
+	require.Equal(t, "自主购卡", settings.SelfServiceCardLabel)
+	require.Equal(t, "https://pay.ldxp.cn/shop/OTOKMA5D", settings.SelfServiceCardURL)
+}
+
+func TestSettingService_GetPublicSettings_ExposesConfiguredSelfServiceCard(t *testing.T) {
+	repo := &settingPublicRepoStub{
+		values: map[string]string{
+			SettingKeySelfServiceCardEnabled: "false",
+			SettingKeySelfServiceCardLabel:   "外部购卡",
+			SettingKeySelfServiceCardURL:     " https://pay.example.com/card ",
+		},
+	}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.False(t, settings.SelfServiceCardEnabled)
+	require.Equal(t, "外部购卡", settings.SelfServiceCardLabel)
+	require.Equal(t, "https://pay.example.com/card", settings.SelfServiceCardURL)
+}
+
 func TestSettingService_GetPublicSettings_ExposesForceEmailOnThirdPartySignup(t *testing.T) {
 	repo := &settingPublicRepoStub{
 		values: map[string]string{

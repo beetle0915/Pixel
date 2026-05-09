@@ -187,7 +187,13 @@ func TestAPIContracts(t *testing.T) {
 			}`,
 		},
 		{
-			name:   "POST /api/v1/keys",
+			name: "POST /api/v1/keys",
+			setup: func(t *testing.T, deps *contractDeps) {
+				t.Helper()
+				deps.settingRepo.SetAll(map[string]string{
+					service.SettingKeyAllowUngroupedKeyScheduling: "true",
+				})
+			},
 			method: http.MethodPost,
 			path:   "/api/v1/keys",
 			body:   `{"name":"Key One","custom_key":"sk_custom_1234567890"}`,
@@ -335,6 +341,7 @@ func TestAPIContracts(t *testing.T) {
 						"require_oauth_only": false,
 						"require_privacy_set": false,
 						"rpm_limit": 0,
+						"scope": "public",
 						"created_at": "2025-01-02T03:04:05Z",
 						"updated_at": "2025-01-02T03:04:05Z"
 					}
@@ -656,6 +663,11 @@ func TestAPIContracts(t *testing.T) {
 					"turnstile_enabled": true,
 					"turnstile_site_key": "site-key",
 					"turnstile_secret_key_configured": true,
+					"user_private_group_rate_multiplier": 1,
+					"user_private_group_rpm_limit": 0,
+					"user_private_group_daily_limit_usd": null,
+					"user_private_group_weekly_limit_usd": null,
+					"user_private_group_monthly_limit_usd": null,
 						"linuxdo_connect_enabled": false,
 						"linuxdo_connect_client_id": "",
 						"linuxdo_connect_client_secret_configured": false,
@@ -733,6 +745,9 @@ func TestAPIContracts(t *testing.T) {
 					"hide_ccs_import_button": false,
 					"purchase_subscription_enabled": false,
 					"purchase_subscription_url": "",
+					"self_service_card_enabled": true,
+					"self_service_card_label": "自主购卡",
+					"self_service_card_url": "https://pay.ldxp.cn/shop/OTOKMA5D",
 					"table_default_page_size": 20,
 						"table_page_size_options": [10, 20, 50, 100],
 					"min_claude_code_version": "",
@@ -869,6 +884,11 @@ func TestAPIContracts(t *testing.T) {
 					"turnstile_enabled": false,
 					"turnstile_site_key": "",
 					"turnstile_secret_key_configured": false,
+					"user_private_group_rate_multiplier": 1,
+					"user_private_group_rpm_limit": 0,
+					"user_private_group_daily_limit_usd": null,
+					"user_private_group_weekly_limit_usd": null,
+					"user_private_group_monthly_limit_usd": null,
 					"linuxdo_connect_enabled": false,
 					"linuxdo_connect_client_id": "",
 					"linuxdo_connect_client_secret_configured": false,
@@ -905,6 +925,9 @@ func TestAPIContracts(t *testing.T) {
 					"hide_ccs_import_button": false,
 					"purchase_subscription_enabled": false,
 					"purchase_subscription_url": "",
+					"self_service_card_enabled": true,
+					"self_service_card_label": "自主购卡",
+					"self_service_card_url": "https://pay.ldxp.cn/shop/OTOKMA5D",
 					"table_default_page_size": 20,
 					"table_page_size_options": [10, 20, 50],
 					"custom_menu_items": [],
@@ -1096,13 +1119,12 @@ func newContractDeps(t *testing.T) *contractDeps {
 		},
 	}
 
-	apiKeyRepo := newStubApiKeyRepo(now)
-	apiKeyCache := stubApiKeyCache{}
 	groupRepo := &stubGroupRepo{}
 	userSubRepo := &stubUserSubscriptionRepo{}
 	accountRepo := stubAccountRepo{}
 	proxyRepo := stubProxyRepo{}
 	redeemRepo := &stubRedeemCodeRepo{}
+	settingRepo := newStubSettingRepo()
 
 	cfg := &config.Config{
 		Default: config.DefaultConfig{
@@ -1111,6 +1133,8 @@ func newContractDeps(t *testing.T) *contractDeps {
 		RunMode: config.RunModeStandard,
 	}
 
+	apiKeyRepo := newStubApiKeyRepo(now)
+	apiKeyCache := stubApiKeyCache{}
 	userService := service.NewUserService(userRepo, nil, nil, nil)
 	apiKeyService := service.NewAPIKeyService(apiKeyRepo, userRepo, groupRepo, userSubRepo, nil, apiKeyCache, cfg)
 
@@ -1123,8 +1147,8 @@ func newContractDeps(t *testing.T) *contractDeps {
 	redeemService := service.NewRedeemService(redeemRepo, userRepo, subscriptionService, nil, nil, nil, nil)
 	redeemHandler := handler.NewRedeemHandler(redeemService)
 
-	settingRepo := newStubSettingRepo()
 	settingService := service.NewSettingService(settingRepo, cfg)
+	apiKeyService.SetSettingService(settingService)
 
 	adminService := service.NewAdminService(userRepo, groupRepo, &accountRepo, proxyRepo, apiKeyRepo, redeemRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	authHandler := handler.NewAuthHandler(cfg, nil, userService, settingService, nil, redeemService, nil)
@@ -2267,6 +2291,10 @@ func (r *stubUsageLogRepo) GetUserUsageTrendByUserID(ctx context.Context, userID
 }
 
 func (r *stubUsageLogRepo) GetUserModelStats(ctx context.Context, userID int64, startTime, endTime time.Time) ([]usagestats.ModelStat, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (r *stubUsageLogRepo) GetUserAccountSharingDashboard(ctx context.Context, userID int64, startTime, endTime time.Time, granularity string) (*usagestats.AccountSharingDashboardStats, error) {
 	return nil, errors.New("not implemented")
 }
 
