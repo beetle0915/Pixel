@@ -107,6 +107,46 @@ func TestUsageLogFromService_IncludesServiceTierForUserAndAdmin(t *testing.T) {
 	require.InDelta(t, 1.5, *adminDTO.AccountRateMultiplier, 1e-12)
 }
 
+func TestUsageLogFromService_IncludesGroupPoolAndKeepsAccountAdminOnly(t *testing.T) {
+	t.Parallel()
+
+	groupID := int64(88)
+	log := &service.UsageLog{
+		RequestID: "req_pool",
+		Model:     "gpt-5.4",
+		GroupID:   &groupID,
+		Group: &service.Group{
+			ID:       groupID,
+			Name:     "Codex Plus Pool",
+			Platform: service.PlatformOpenAI,
+			Status:   service.StatusActive,
+		},
+		Account: &service.Account{
+			ID:   99,
+			Name: "internal-oauth@example.com",
+		},
+	}
+
+	userDTO := UsageLogFromService(log)
+	adminDTO := UsageLogFromServiceAdmin(log)
+
+	require.NotNil(t, userDTO.Group)
+	require.Equal(t, "Codex Plus Pool", userDTO.Group.Name)
+	require.Equal(t, groupID, userDTO.Group.ID)
+	require.NotNil(t, adminDTO.Group)
+	require.Equal(t, "Codex Plus Pool", adminDTO.Group.Name)
+
+	userJSON, err := json.Marshal(userDTO)
+	require.NoError(t, err)
+	require.NotContains(t, string(userJSON), `"account":`)
+	require.NotContains(t, string(userJSON), "internal-oauth@example.com")
+
+	adminJSON, err := json.Marshal(adminDTO)
+	require.NoError(t, err)
+	require.Contains(t, string(adminJSON), `"account":`)
+	require.Contains(t, string(adminJSON), "internal-oauth@example.com")
+}
+
 func TestUsageLogFromService_UsesRequestedModelAndKeepsUpstreamAdminOnly(t *testing.T) {
 	t.Parallel()
 

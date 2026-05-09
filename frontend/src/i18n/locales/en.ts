@@ -951,6 +951,7 @@ export default {
     exporting: 'Exporting...',
     preparingExport: 'Preparing export...',
     model: 'Model',
+    accountPool: 'Account Pool',
     requestedModel: 'Requested',
     upstreamModel: 'Upstream',
     reasoningEffort: 'Reasoning Effort',

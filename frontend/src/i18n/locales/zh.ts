@@ -955,6 +955,7 @@ export default {
     exporting: '导出中...',
     preparingExport: '正在准备导出...',
     model: '模型',
+    accountPool: '账号池',
     requestedModel: '请求',
     upstreamModel: '上游',
     reasoningEffort: '推理强度',

@@ -33,7 +33,9 @@ const messages: Record<string, string> = {
   'usage.allApiKeys': 'All API Keys',
   'usage.apiKeyFilter': 'API Key',
   'usage.model': 'Model',
+  'usage.accountPool': 'Account Pool',
   'usage.reasoningEffort': 'Reasoning Effort',
+  'usage.endpoint': 'Endpoint',
   'usage.type': 'Type',
   'usage.tokens': 'Tokens',
   'usage.cost': 'Cost',
@@ -69,8 +71,16 @@ vi.mock('vue-i18n', async () => {
 
 const AppLayoutStub = { template: '<div><slot /></div>' }
 const TablePageLayoutStub = {
-  template: '<div><slot name="actions" /><slot name="filters" /><slot /></div>',
+  template: '<div><slot name="actions" /><slot name="filters" /><slot name="table" /><slot name="pagination" /><slot /></div>',
 }
+
+const readBlobText = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(blob)
+  })
 
 describe('user UsageView tooltip', () => {
   beforeEach(() => {
@@ -81,6 +91,20 @@ describe('user UsageView tooltip', () => {
     showWarning.mockReset()
     showSuccess.mockReset()
     showInfo.mockReset()
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
 
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0,
@@ -208,6 +232,7 @@ describe('user UsageView tooltip', () => {
         created_at: '2026-03-08T00:00:00Z',
         model: 'gpt-5.4',
         reasoning_effort: null,
+        group: { name: 'Codex Plus Pool' },
         api_key: { name: 'demo-key' },
       },
     ]
@@ -268,10 +293,79 @@ describe('user UsageView tooltip', () => {
     })
     expect(hasSortedExportQuery).toBe(true)
     expect(clickSpy).toHaveBeenCalled()
+    const exportedText = await readBlobText(exportedBlob as Blob)
+    expect(exportedText).toContain('Account Pool')
+    expect(exportedText).toContain('Codex Plus Pool')
     expect(showSuccess).toHaveBeenCalled()
 
     window.URL.createObjectURL = originalCreateObjectURL
     window.URL.revokeObjectURL = originalRevokeObjectURL
     clickSpy.mockRestore()
+  })
+
+  it('renders the account pool column for user usage logs', async () => {
+    query.mockResolvedValue({
+      items: [
+        {
+          request_id: 'req-user-pool',
+          actual_cost: 0.01,
+          total_cost: 0.01,
+          rate_multiplier: 1,
+          service_tier: null,
+          input_cost: 0.001,
+          output_cost: 0.002,
+          cache_creation_cost: 0,
+          cache_read_cost: 0,
+          input_tokens: 10,
+          output_tokens: 20,
+          cache_creation_tokens: 0,
+          cache_read_tokens: 0,
+          cache_creation_5m_tokens: 0,
+          cache_creation_1h_tokens: 0,
+          image_count: 0,
+          image_size: null,
+          first_token_ms: null,
+          duration_ms: 123,
+          created_at: '2026-03-08T00:00:00Z',
+          model: 'gpt-5.4',
+          reasoning_effort: null,
+          group: { name: 'Codex Plus Pool' },
+          api_key: { name: 'demo-key' },
+        },
+      ],
+      total: 1,
+      pages: 1,
+    })
+    getStatsByDateRange.mockResolvedValue({
+      total_requests: 1,
+      total_tokens: 30,
+      total_cost: 0.01,
+      total_actual_cost: 0.01,
+      average_duration_ms: 123,
+    })
+    list.mockResolvedValue({ items: [] })
+
+    const wrapper = mount(UsageView, {
+      global: {
+        stubs: {
+          AppLayout: AppLayoutStub,
+          TablePageLayout: TablePageLayoutStub,
+          Pagination: true,
+          EmptyState: true,
+          Select: true,
+          DateRangePicker: true,
+          Icon: true,
+          Teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    const text = wrapper.text()
+    expect(text).toContain('Account Pool')
+    const setupState = (wrapper.vm as any).$?.setupState
+    expect(setupState.usageLogs[0].group.name).toBe('Codex Plus Pool')
   })
 })

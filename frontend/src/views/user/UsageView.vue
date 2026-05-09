@@ -164,6 +164,12 @@
             }}</span>
           </template>
 
+          <template #cell-account_pool="{ row }">
+            <span class="block max-w-[180px] truncate text-sm text-gray-700 dark:text-gray-300" :title="row.group?.name || ''">
+              {{ row.group?.name || '-' }}
+            </span>
+          </template>
+
           <template #cell-model="{ value }">
             <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
           </template>
@@ -546,6 +552,7 @@ const usageStats = ref<UsageStatsResponse | null>(null)
 
 const columns = computed<Column[]>(() => [
   { key: 'api_key', label: t('usage.apiKeyFilter'), sortable: false },
+  { key: 'account_pool', label: t('usage.accountPool'), sortable: false },
   { key: 'model', label: t('usage.model'), sortable: true },
   { key: 'reasoning_effort', label: t('usage.reasoningEffort'), sortable: false },
   { key: 'endpoint', label: t('usage.endpoint'), sortable: false },
@@ -833,6 +840,7 @@ const exportToCSV = async () => {
     const headers = [
       'Time',
       'API Key Name',
+      'Account Pool',
       'Model',
       'Reasoning Effort',
       'Inbound Endpoint',
@@ -852,6 +860,7 @@ const exportToCSV = async () => {
       [
         log.created_at,
         log.api_key?.name || '',
+        log.group?.name || '',
         log.model,
         formatReasoningEffort(log.reasoning_effort),
         log.inbound_endpoint || '',
