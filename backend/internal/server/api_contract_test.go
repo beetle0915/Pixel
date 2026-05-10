@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -275,6 +276,106 @@ func TestAPIContracts(t *testing.T) {
 							"window_1d_start": null,
 							"window_7d_start": null,
 							"expires_at": null,
+							"created_at": "2025-01-02T03:04:05Z",
+							"updated_at": "2025-01-02T03:04:05Z"
+						}
+					],
+					"total": 1,
+					"page": 1,
+					"page_size": 10,
+					"pages": 1
+				}
+			}`,
+		},
+		{
+			name: "GET /api/v1/announcements",
+			setup: func(t *testing.T, deps *contractDeps) {
+				t.Helper()
+				deps.announcementRepo.MustSeed(&service.Announcement{
+					ID:         7,
+					Title:      "System notice",
+					Content:    "Native announcement content",
+					Status:     service.AnnouncementStatusActive,
+					NotifyMode: service.AnnouncementNotifyModePopup,
+					Targeting:  service.AnnouncementTargeting{},
+					CreatedAt:  deps.now,
+					UpdatedAt:  deps.now,
+				})
+			},
+			method:     http.MethodGet,
+			path:       "/api/v1/announcements",
+			wantStatus: http.StatusOK,
+			wantJSON: `{
+				"code": 0,
+				"message": "success",
+				"data": [
+					{
+						"id": 7,
+						"title": "System notice",
+						"content": "Native announcement content",
+						"notify_mode": "popup",
+						"created_at": "2025-01-02T03:04:05Z",
+						"updated_at": "2025-01-02T03:04:05Z"
+					}
+				]
+			}`,
+		},
+		{
+			name: "POST /api/v1/announcements/:id/read",
+			setup: func(t *testing.T, deps *contractDeps) {
+				t.Helper()
+				deps.announcementRepo.MustSeed(&service.Announcement{
+					ID:         7,
+					Title:      "System notice",
+					Content:    "Native announcement content",
+					Status:     service.AnnouncementStatusActive,
+					NotifyMode: service.AnnouncementNotifyModePopup,
+					Targeting:  service.AnnouncementTargeting{},
+					CreatedAt:  deps.now,
+					UpdatedAt:  deps.now,
+				})
+			},
+			method:     http.MethodPost,
+			path:       "/api/v1/announcements/7/read",
+			wantStatus: http.StatusOK,
+			wantJSON: `{
+				"code": 0,
+				"message": "success",
+				"data": {
+					"message": "ok"
+				}
+			}`,
+		},
+		{
+			name: "GET /api/v1/admin/announcements",
+			setup: func(t *testing.T, deps *contractDeps) {
+				t.Helper()
+				deps.announcementRepo.MustSeed(&service.Announcement{
+					ID:         9,
+					Title:      "Admin notice",
+					Content:    "Managed from admin",
+					Status:     service.AnnouncementStatusActive,
+					NotifyMode: service.AnnouncementNotifyModeSilent,
+					Targeting:  service.AnnouncementTargeting{},
+					CreatedAt:  deps.now,
+					UpdatedAt:  deps.now,
+				})
+			},
+			method:     http.MethodGet,
+			path:       "/api/v1/admin/announcements?page=1&page_size=10",
+			wantStatus: http.StatusOK,
+			wantJSON: `{
+				"code": 0,
+				"message": "success",
+				"data": {
+					"items": [
+						{
+							"id": 9,
+							"title": "Admin notice",
+							"content": "Managed from admin",
+							"status": "active",
+							"notify_mode": "silent",
+							"targeting": {},
 							"created_at": "2025-01-02T03:04:05Z",
 							"updated_at": "2025-01-02T03:04:05Z"
 						}
@@ -1118,15 +1219,17 @@ func TestAPIContracts(t *testing.T) {
 }
 
 type contractDeps struct {
-	now         time.Time
-	router      http.Handler
-	cfg         *config.Config
-	apiKeyRepo  *stubApiKeyRepo
-	groupRepo   *stubGroupRepo
-	userSubRepo *stubUserSubscriptionRepo
-	usageRepo   *stubUsageLogRepo
-	settingRepo *stubSettingRepo
-	redeemRepo  *stubRedeemCodeRepo
+	now              time.Time
+	router           http.Handler
+	cfg              *config.Config
+	apiKeyRepo       *stubApiKeyRepo
+	groupRepo        *stubGroupRepo
+	userSubRepo      *stubUserSubscriptionRepo
+	usageRepo        *stubUsageLogRepo
+	settingRepo      *stubSettingRepo
+	redeemRepo       *stubRedeemCodeRepo
+	announcementRepo *stubAnnouncementRepo
+	announcementRead *stubAnnouncementReadRepo
 }
 
 func newContractDeps(t *testing.T) *contractDeps {
@@ -1157,6 +1260,8 @@ func newContractDeps(t *testing.T) *contractDeps {
 	accountRepo := stubAccountRepo{}
 	proxyRepo := stubProxyRepo{}
 	redeemRepo := &stubRedeemCodeRepo{}
+	announcementRepo := &stubAnnouncementRepo{}
+	announcementRead := &stubAnnouncementReadRepo{}
 	settingRepo := newStubSettingRepo()
 
 	cfg := &config.Config{
@@ -1179,6 +1284,10 @@ func newContractDeps(t *testing.T) *contractDeps {
 
 	redeemService := service.NewRedeemService(redeemRepo, userRepo, subscriptionService, nil, nil, nil, nil)
 	redeemHandler := handler.NewRedeemHandler(redeemService)
+
+	announcementService := service.NewAnnouncementService(announcementRepo, announcementRead, userRepo, userSubRepo)
+	announcementHandler := handler.NewAnnouncementHandler(announcementService)
+	adminAnnouncementHandler := adminhandler.NewAnnouncementHandler(announcementService)
 
 	settingService := service.NewSettingService(settingRepo, cfg)
 	apiKeyService.SetSettingService(settingService)
@@ -1234,21 +1343,34 @@ func newContractDeps(t *testing.T) *contractDeps {
 	v1Redeem.Use(jwtAuth)
 	v1Redeem.GET("/redeem/history", redeemHandler.GetHistory)
 
+	v1Announcements := v1.Group("")
+	v1Announcements.Use(jwtAuth)
+	v1Announcements.GET("/announcements", announcementHandler.List)
+	v1Announcements.POST("/announcements/:id/read", announcementHandler.MarkRead)
+
 	v1Admin := v1.Group("/admin")
 	v1Admin.Use(adminAuth)
 	v1Admin.GET("/settings", adminSettingHandler.GetSettings)
 	v1Admin.POST("/accounts/bulk-update", adminAccountHandler.BulkUpdate)
+	v1Admin.GET("/announcements", adminAnnouncementHandler.List)
+	v1Admin.POST("/announcements", adminAnnouncementHandler.Create)
+	v1Admin.GET("/announcements/:id", adminAnnouncementHandler.GetByID)
+	v1Admin.PUT("/announcements/:id", adminAnnouncementHandler.Update)
+	v1Admin.DELETE("/announcements/:id", adminAnnouncementHandler.Delete)
+	v1Admin.GET("/announcements/:id/read-status", adminAnnouncementHandler.ListReadStatus)
 
 	return &contractDeps{
-		now:         now,
-		router:      r,
-		cfg:         cfg,
-		apiKeyRepo:  apiKeyRepo,
-		groupRepo:   groupRepo,
-		userSubRepo: userSubRepo,
-		usageRepo:   usageRepo,
-		settingRepo: settingRepo,
-		redeemRepo:  redeemRepo,
+		now:              now,
+		router:           r,
+		cfg:              cfg,
+		apiKeyRepo:       apiKeyRepo,
+		groupRepo:        groupRepo,
+		userSubRepo:      userSubRepo,
+		usageRepo:        usageRepo,
+		settingRepo:      settingRepo,
+		redeemRepo:       redeemRepo,
+		announcementRepo: announcementRepo,
+		announcementRead: announcementRead,
 	}
 }
 
@@ -2447,6 +2569,157 @@ func (r *stubSettingRepo) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+type stubAnnouncementRepo struct {
+	items map[int64]*service.Announcement
+}
+
+func (r *stubAnnouncementRepo) MustSeed(a *service.Announcement) {
+	if r.items == nil {
+		r.items = make(map[int64]*service.Announcement)
+	}
+	cp := *a
+	r.items[a.ID] = &cp
+}
+
+func (r *stubAnnouncementRepo) Create(ctx context.Context, a *service.Announcement) error {
+	if r.items == nil {
+		r.items = make(map[int64]*service.Announcement)
+	}
+	if a.ID == 0 {
+		a.ID = int64(len(r.items) + 1)
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = time.Now().UTC()
+	}
+	if a.UpdatedAt.IsZero() {
+		a.UpdatedAt = a.CreatedAt
+	}
+	cp := *a
+	r.items[a.ID] = &cp
+	return nil
+}
+
+func (r *stubAnnouncementRepo) GetByID(ctx context.Context, id int64) (*service.Announcement, error) {
+	if r.items == nil {
+		return nil, service.ErrAnnouncementNotFound
+	}
+	a, ok := r.items[id]
+	if !ok {
+		return nil, service.ErrAnnouncementNotFound
+	}
+	cp := *a
+	return &cp, nil
+}
+
+func (r *stubAnnouncementRepo) Update(ctx context.Context, a *service.Announcement) error {
+	if r.items == nil {
+		return service.ErrAnnouncementNotFound
+	}
+	if _, ok := r.items[a.ID]; !ok {
+		return service.ErrAnnouncementNotFound
+	}
+	cp := *a
+	r.items[a.ID] = &cp
+	return nil
+}
+
+func (r *stubAnnouncementRepo) Delete(ctx context.Context, id int64) error {
+	if r.items != nil {
+		delete(r.items, id)
+	}
+	return nil
+}
+
+func (r *stubAnnouncementRepo) List(ctx context.Context, params pagination.PaginationParams, filters service.AnnouncementListFilters) ([]service.Announcement, *pagination.PaginationResult, error) {
+	items := make([]service.Announcement, 0, len(r.items))
+	for _, a := range r.items {
+		if filters.Status != "" && a.Status != filters.Status {
+			continue
+		}
+		if filters.Search != "" && !strings.Contains(strings.ToLower(a.Title), strings.ToLower(filters.Search)) && !strings.Contains(strings.ToLower(a.Content), strings.ToLower(filters.Search)) {
+			continue
+		}
+		items = append(items, *a)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].ID > items[j].ID
+	})
+	total := int64(len(items))
+	start := params.Offset()
+	if start > len(items) {
+		start = len(items)
+	}
+	end := start + params.Limit()
+	if end > len(items) {
+		end = len(items)
+	}
+	return append([]service.Announcement(nil), items[start:end]...), paginationResult(total, params), nil
+}
+
+func (r *stubAnnouncementRepo) ListActive(ctx context.Context, now time.Time) ([]service.Announcement, error) {
+	items := make([]service.Announcement, 0, len(r.items))
+	for _, a := range r.items {
+		if !a.IsActiveAt(now) {
+			continue
+		}
+		items = append(items, *a)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].ID > items[j].ID
+	})
+	return items, nil
+}
+
+type stubAnnouncementReadRepo struct {
+	read map[int64]map[int64]time.Time
+}
+
+func (r *stubAnnouncementReadRepo) MarkRead(ctx context.Context, announcementID, userID int64, readAt time.Time) error {
+	if r.read == nil {
+		r.read = make(map[int64]map[int64]time.Time)
+	}
+	if r.read[announcementID] == nil {
+		r.read[announcementID] = make(map[int64]time.Time)
+	}
+	if _, exists := r.read[announcementID][userID]; !exists {
+		r.read[announcementID][userID] = readAt
+	}
+	return nil
+}
+
+func (r *stubAnnouncementReadRepo) GetReadMapByUser(ctx context.Context, userID int64, announcementIDs []int64) (map[int64]time.Time, error) {
+	out := make(map[int64]time.Time)
+	for _, announcementID := range announcementIDs {
+		if r.read == nil || r.read[announcementID] == nil {
+			continue
+		}
+		if readAt, ok := r.read[announcementID][userID]; ok {
+			out[announcementID] = readAt
+		}
+	}
+	return out, nil
+}
+
+func (r *stubAnnouncementReadRepo) GetReadMapByUsers(ctx context.Context, announcementID int64, userIDs []int64) (map[int64]time.Time, error) {
+	out := make(map[int64]time.Time)
+	for _, userID := range userIDs {
+		if r.read == nil || r.read[announcementID] == nil {
+			continue
+		}
+		if readAt, ok := r.read[announcementID][userID]; ok {
+			out[userID] = readAt
+		}
+	}
+	return out, nil
+}
+
+func (r *stubAnnouncementReadRepo) CountByAnnouncementID(ctx context.Context, announcementID int64) (int64, error) {
+	if r.read == nil || r.read[announcementID] == nil {
+		return 0, nil
+	}
+	return int64(len(r.read[announcementID])), nil
+}
+
 func paginateLogs(logs []service.UsageLog, params pagination.PaginationParams) []service.UsageLog {
 	start := params.Offset()
 	if start > len(logs) {
@@ -2484,4 +2757,6 @@ var (
 	_ service.UserSubscriptionRepository = (*stubUserSubscriptionRepo)(nil)
 	_ service.UsageLogRepository         = (*stubUsageLogRepo)(nil)
 	_ service.SettingRepository          = (*stubSettingRepo)(nil)
+	_ service.AnnouncementRepository     = (*stubAnnouncementRepo)(nil)
+	_ service.AnnouncementReadRepository = (*stubAnnouncementReadRepo)(nil)
 )
