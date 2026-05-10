@@ -1,7 +1,12 @@
 package admin
 
 import (
+	"encoding/csv"
+	"fmt"
+	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -41,6 +46,163 @@ func (h *PaymentHandler) GetDashboard(c *gin.Context) {
 		return
 	}
 	response.Success(c, stats)
+}
+
+// --- Finance Ledger ---
+
+// GetFinanceLedgerSummary returns redeem-code based finance ledger analytics.
+// GET /api/v1/admin/finance/ledger/summary
+func (h *PaymentHandler) GetFinanceLedgerSummary(c *gin.Context) {
+	q, ok := parseFinanceLedgerQuery(c)
+	if !ok {
+		return
+	}
+	summary, err := h.paymentService.GetFinanceLedgerSummary(c.Request.Context(), q)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, summary)
+}
+
+// ListFinanceLedgerRecords returns paginated redeem-code finance ledger rows.
+// GET /api/v1/admin/finance/ledger/records
+func (h *PaymentHandler) ListFinanceLedgerRecords(c *gin.Context) {
+	q, ok := parseFinanceLedgerQuery(c)
+	if !ok {
+		return
+	}
+	records, total, err := h.paymentService.ListFinanceLedgerRecords(c.Request.Context(), q)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Paginated(c, records, total, q.Page, q.PageSize)
+}
+
+// ExportFinanceLedgerRecords exports filtered redeem-code finance ledger rows as CSV.
+// GET /api/v1/admin/finance/ledger/export
+func (h *PaymentHandler) ExportFinanceLedgerRecords(c *gin.Context) {
+	q, ok := parseFinanceLedgerQuery(c)
+	if !ok {
+		return
+	}
+	records, err := h.paymentService.ExportFinanceLedgerRecords(c.Request.Context(), q)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", "attachment; filename=finance_ledger.csv")
+	w := csv.NewWriter(c.Writer)
+	_ = w.Write([]string{"used_at", "source", "type", "amount", "user_id", "email", "username", "code", "notes", "out_trade_no", "payment_type", "pay_amount", "payment_status", "anomalies"})
+	for _, record := range records {
+		usedAt := ""
+		if record.UsedAt != nil {
+			usedAt = record.UsedAt.Format(time.RFC3339)
+		}
+		_ = w.Write([]string{
+			usedAt,
+			record.Source,
+			record.Type,
+			fmt.Sprintf("%.2f", record.Value),
+			strconv.FormatInt(record.UserID, 10),
+			record.UserEmail,
+			record.Username,
+			record.Code,
+			record.Notes,
+			record.OutTradeNo,
+			record.PaymentType,
+			fmt.Sprintf("%.2f", record.PayAmount),
+			record.PaymentStatus,
+			strings.Join(record.Anomalies, "|"),
+		})
+	}
+	w.Flush()
+	if err := w.Error(); err != nil {
+		response.InternalError(c, "failed to export finance ledger")
+		return
+	}
+	c.Status(http.StatusOK)
+}
+
+func parseFinanceLedgerQuery(c *gin.Context) (service.FinanceLedgerQuery, bool) {
+	page, pageSize := response.ParsePagination(c)
+	if pageSize > 200 {
+		pageSize = 200
+	}
+	timezone := strings.TrimSpace(c.DefaultQuery("timezone", "Asia/Shanghai"))
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		response.BadRequest(c, "Invalid timezone")
+		return service.FinanceLedgerQuery{}, false
+	}
+	now := time.Now().In(loc)
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	end := start.AddDate(0, 0, 1)
+	if raw := strings.TrimSpace(c.Query("start_at")); raw != "" {
+		parsed, err := parseFinanceLedgerTime(raw, loc, false)
+		if err != nil {
+			response.BadRequest(c, "Invalid start_at")
+			return service.FinanceLedgerQuery{}, false
+		}
+		start = parsed
+	}
+	if raw := strings.TrimSpace(c.Query("end_at")); raw != "" {
+		parsed, err := parseFinanceLedgerTime(raw, loc, true)
+		if err != nil {
+			response.BadRequest(c, "Invalid end_at")
+			return service.FinanceLedgerQuery{}, false
+		}
+		end = parsed
+	}
+	if !end.After(start) {
+		response.BadRequest(c, "end_at must be after start_at")
+		return service.FinanceLedgerQuery{}, false
+	}
+	q := service.FinanceLedgerQuery{
+		StartTime:   start,
+		EndTime:     end,
+		Timezone:    timezone,
+		Type:        strings.TrimSpace(c.Query("type")),
+		Source:      strings.TrimSpace(c.Query("source")),
+		Search:      strings.TrimSpace(c.Query("search")),
+		PaymentType: strings.TrimSpace(c.Query("payment_type")),
+		AnomalyOnly: c.Query("anomaly_only") == "true",
+		Page:        page,
+		PageSize:    pageSize,
+	}
+	if raw := strings.TrimSpace(c.Query("min_amount")); raw != "" {
+		value, err := strconv.ParseFloat(raw, 64)
+		if err != nil {
+			response.BadRequest(c, "Invalid min_amount")
+			return service.FinanceLedgerQuery{}, false
+		}
+		q.MinAmount = &value
+	}
+	if raw := strings.TrimSpace(c.Query("max_amount")); raw != "" {
+		value, err := strconv.ParseFloat(raw, 64)
+		if err != nil {
+			response.BadRequest(c, "Invalid max_amount")
+			return service.FinanceLedgerQuery{}, false
+		}
+		q.MaxAmount = &value
+	}
+	return q, true
+}
+
+func parseFinanceLedgerTime(raw string, loc *time.Location, endOfDate bool) (time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, raw); err == nil {
+		return t, nil
+	}
+	t, err := time.ParseInLocation("2006-01-02", raw, loc)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if endOfDate {
+		t = t.AddDate(0, 0, 1)
+	}
+	return t, nil
 }
 
 // --- Orders ---

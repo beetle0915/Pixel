@@ -780,6 +780,7 @@ const adminNavItems = computed((): NavItem[] => {
       ],
     },
     { path: '/admin/revenue', label: t('nav.revenue'), icon: ChartIcon, hideInSimpleMode: true },
+    { path: '/admin/finance/ledger', label: t('nav.financeLedger'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/admin/usage', label: t('nav.usage'), icon: ChartIcon }
   ]
 

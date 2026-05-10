@@ -375,6 +375,7 @@ export default {
     orderManagement: '订单管理',
     paymentDashboard: '支付概览',
     revenue: '收益管理',
+    financeLedger: '财务流水',
     paymentConfig: '支付配置',
     paymentPlans: '订阅套餐',
     channelManagement: '渠道管理',
@@ -1956,6 +1957,103 @@ export default {
         jobCreated: '备份任务已创建：{jobID}（{status}）',
         refreshJobs: '刷新任务',
         loadMore: '加载更多'
+      }
+    },
+
+    financeLedger: {
+      title: '财务流水',
+      description: '按兑换码、支付订单和管理员发放记录核对充值额度',
+      refresh: '刷新',
+      exportCsv: '导出 CSV',
+      exporting: '导出中...',
+      exportSuccess: '财务流水已导出',
+      loadFailed: '加载财务流水失败',
+      exportFailed: '导出财务流水失败',
+      noData: '暂无数据',
+      presets: {
+        today: '今天',
+        yesterday: '昨天',
+        last7Days: '近 7 天',
+        thisMonth: '本月'
+      },
+      filters: {
+        startDate: '开始日期',
+        endDate: '结束日期',
+        searchPlaceholder: '搜索用户、邮箱、兑换码或备注',
+        allSources: '全部来源',
+        allTypes: '全部类型',
+        allPaymentTypes: '全部支付方式',
+        anomalyOnly: '仅异常',
+        apply: '查询',
+        reset: '重置',
+        source: '来源',
+        type: '类型',
+        paymentType: '支付方式',
+        minAmount: '最小金额',
+        maxAmount: '最大金额'
+      },
+      cards: {
+        totalAdded: '今日/区间入账',
+        userRecharge: '用户充值合计',
+        onlinePayment: '在线支付',
+        redeemCode: '兑换码兑换',
+        adminGranted: '管理员发放',
+        adminDeducted: '管理员扣减',
+        cumulative: '历史累计入账',
+        uniqueUsers: '涉及用户',
+        records: '流水笔数',
+        metaRecords: '{count} 条流水',
+        metaUsers: '{count} 个用户',
+        metaCumulative: '全部历史已使用余额码与管理员加款'
+      },
+      sections: {
+        sourceDistribution: '来源拆分',
+        typeDistribution: '类型拆分',
+        paymentTypeDistribution: '支付方式拆分',
+        dailySeries: '每日入账',
+        topUsers: '用户充值排行',
+        anomalies: '异常线索',
+        records: '流水明细'
+      },
+      sources: {
+        online_payment: '在线支付',
+        redeem_code: '兑换码',
+        admin_grant: '管理员发放',
+        admin_deduct: '管理员扣减',
+        entitlement: '权益兑换',
+        unknown: '未知来源'
+      },
+      types: {
+        balance: '余额',
+        admin_balance: '管理员调整',
+        subscription: '订阅',
+        unknown: '未知类型'
+      },
+      anomalies: {
+        total: '异常总数',
+        none: '暂无异常',
+        orphan_payment_redeem_code: '疑似支付码无订单',
+        missing_user: '缺失用户',
+        admin_adjustment_without_notes: '管理员调整无备注',
+        negative_adjustment: '管理员扣减',
+        payment_orders_without_redeem: '支付订单无兑换码'
+      },
+      table: {
+        usedAt: '使用时间',
+        user: '用户',
+        amount: '金额',
+        source: '来源',
+        code: '兑换码',
+        payment: '支付信息',
+        notes: '备注',
+        anomalies: '异常',
+        status: '状态',
+        empty: '没有匹配的财务流水',
+        showing: '显示 {start}-{end} / 共 {total} 条',
+        page: '第 {page} / {pages} 页',
+        prev: '上一页',
+        next: '下一页',
+        noPayment: '无支付订单'
       }
     },
 

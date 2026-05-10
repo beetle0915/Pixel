@@ -73,6 +73,7 @@ func RegisterAdminRoutes(
 		// 使用记录管理
 		registerUsageRoutes(admin, h)
 		registerRevenueRoutes(admin, h)
+		registerFinanceLedgerRoutes(admin, h)
 
 		// 用户属性管理
 		registerUserAttributeRoutes(admin, h)
@@ -97,6 +98,15 @@ func RegisterAdminRoutes(
 
 		// 邀请返利（专属用户管理）
 		registerAffiliateRoutes(admin, h)
+	}
+}
+
+func registerFinanceLedgerRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	ledger := admin.Group("/finance/ledger")
+	{
+		ledger.GET("/summary", h.Admin.Payment.GetFinanceLedgerSummary)
+		ledger.GET("/records", h.Admin.Payment.ListFinanceLedgerRecords)
+		ledger.GET("/export", h.Admin.Payment.ExportFinanceLedgerRecords)
 	}
 }
 

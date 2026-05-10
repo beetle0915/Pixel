@@ -30,6 +30,7 @@ import channelMonitorAPI from './channelMonitor'
 import channelMonitorTemplateAPI from './channelMonitorTemplate'
 import adminPaymentAPI from './payment'
 import revenueAPI from './revenue'
+import financeLedgerAPI from './financeLedger'
 import affiliatesAPI from './affiliates'
 import accountSharePoliciesAPI from './accountSharePolicies'
 import poolsAPI from './pools'
@@ -65,6 +66,7 @@ export const adminAPI = {
   channelMonitorTemplate: channelMonitorTemplateAPI,
   payment: adminPaymentAPI,
   revenue: revenueAPI,
+  financeLedger: financeLedgerAPI,
   affiliates: affiliatesAPI,
   accountSharePolicies: accountSharePoliciesAPI,
   pools: poolsAPI
@@ -98,6 +100,7 @@ export {
   channelMonitorTemplateAPI,
   adminPaymentAPI,
   revenueAPI,
+  financeLedgerAPI,
   affiliatesAPI,
   accountSharePoliciesAPI,
   poolsAPI
@@ -111,5 +114,6 @@ export type { ErrorPassthroughRule, CreateRuleRequest, UpdateRuleRequest } from 
 export type { BackupAgentHealth, DataManagementConfig } from './dataManagement'
 export type { TLSFingerprintProfile, CreateProfileRequest, UpdateProfileRequest } from './tlsFingerprintProfile'
 export type { RevenueSummary, RevenueSummaryParams } from './revenue'
+export type { FinanceLedgerRecord, FinanceLedgerSummary, FinanceLedgerQueryParams } from './financeLedger'
 export type { AccountSharePolicy } from './accountSharePolicies'
 export type { PoolHealthLevel, PoolHealthSnapshot, PoolHealthPool, PoolHealthSummary } from './pools'

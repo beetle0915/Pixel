@@ -375,6 +375,7 @@ export default {
     orderManagement: 'Orders',
     paymentDashboard: 'Payment Dashboard',
     revenue: 'Revenue',
+    financeLedger: 'Finance Ledger',
     paymentConfig: 'Payment Config',
     paymentPlans: 'Plans',
     channelManagement: 'Channels',
@@ -1935,6 +1936,103 @@ export default {
         jobCreated: 'Backup job created: {jobID} ({status})',
         refreshJobs: 'Refresh Jobs',
         loadMore: 'Load More'
+      }
+    },
+
+    financeLedger: {
+      title: 'Finance Ledger',
+      description: 'Reconcile balance top-ups from redeem codes, payment orders, and admin grants',
+      refresh: 'Refresh',
+      exportCsv: 'Export CSV',
+      exporting: 'Exporting...',
+      exportSuccess: 'Finance ledger exported',
+      loadFailed: 'Failed to load finance ledger',
+      exportFailed: 'Failed to export finance ledger',
+      noData: 'No data available',
+      presets: {
+        today: 'Today',
+        yesterday: 'Yesterday',
+        last7Days: 'Last 7 Days',
+        thisMonth: 'This Month'
+      },
+      filters: {
+        startDate: 'Start Date',
+        endDate: 'End Date',
+        searchPlaceholder: 'Search user, email, code, or notes',
+        allSources: 'All Sources',
+        allTypes: 'All Types',
+        allPaymentTypes: 'All Payment Methods',
+        anomalyOnly: 'Anomalies Only',
+        apply: 'Search',
+        reset: 'Reset',
+        source: 'Source',
+        type: 'Type',
+        paymentType: 'Payment Method',
+        minAmount: 'Min Amount',
+        maxAmount: 'Max Amount'
+      },
+      cards: {
+        totalAdded: 'Range Credits',
+        userRecharge: 'User Recharge',
+        onlinePayment: 'Online Payment',
+        redeemCode: 'Redeem Codes',
+        adminGranted: 'Admin Grants',
+        adminDeducted: 'Admin Deductions',
+        cumulative: 'Cumulative Credits',
+        uniqueUsers: 'Unique Users',
+        records: 'Records',
+        metaRecords: '{count} records',
+        metaUsers: '{count} users',
+        metaCumulative: 'All-time used balance codes and admin grants'
+      },
+      sections: {
+        sourceDistribution: 'Source Breakdown',
+        typeDistribution: 'Type Breakdown',
+        paymentTypeDistribution: 'Payment Breakdown',
+        dailySeries: 'Daily Credits',
+        topUsers: 'Top Recharge Users',
+        anomalies: 'Anomaly Signals',
+        records: 'Ledger Records'
+      },
+      sources: {
+        online_payment: 'Online Payment',
+        redeem_code: 'Redeem Code',
+        admin_grant: 'Admin Grant',
+        admin_deduct: 'Admin Deduct',
+        entitlement: 'Entitlement',
+        unknown: 'Unknown Source'
+      },
+      types: {
+        balance: 'Balance',
+        admin_balance: 'Admin Adjustment',
+        subscription: 'Subscription',
+        unknown: 'Unknown Type'
+      },
+      anomalies: {
+        total: 'Total Anomalies',
+        none: 'No anomalies',
+        orphan_payment_redeem_code: 'Payment code without order',
+        missing_user: 'Missing user',
+        admin_adjustment_without_notes: 'Admin adjustment without notes',
+        negative_adjustment: 'Admin deduction',
+        payment_orders_without_redeem: 'Payment order without redeem code'
+      },
+      table: {
+        usedAt: 'Used At',
+        user: 'User',
+        amount: 'Amount',
+        source: 'Source',
+        code: 'Code',
+        payment: 'Payment',
+        notes: 'Notes',
+        anomalies: 'Anomalies',
+        status: 'Status',
+        empty: 'No matching finance ledger records',
+        showing: 'Showing {start}-{end} of {total}',
+        page: 'Page {page} / {pages}',
+        prev: 'Prev',
+        next: 'Next',
+        noPayment: 'No payment order'
       }
     },
 
