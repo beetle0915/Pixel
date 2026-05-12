@@ -56,6 +56,24 @@ type RedeemCodeRepository interface {
 	SumPositiveBalanceByUser(ctx context.Context, userID int64) (float64, error)
 }
 
+// AffiliateRebateAccruer applies invitation rebates for successful balance
+// recharges. RedeemService depends on this narrow interface so tests can
+// exercise redeem behavior without constructing the full affiliate stack.
+type AffiliateRebateAccruer interface {
+	AccrueInviteRebate(ctx context.Context, inviteeUserID int64, baseRechargeAmount float64) (float64, error)
+}
+
+type redeemAffiliateRebateSuppressKey struct{}
+
+func withRedeemAffiliateRebateSuppressed(ctx context.Context) context.Context {
+	return context.WithValue(ctx, redeemAffiliateRebateSuppressKey{}, true)
+}
+
+func redeemAffiliateRebateSuppressed(ctx context.Context) bool {
+	suppressed, _ := ctx.Value(redeemAffiliateRebateSuppressKey{}).(bool)
+	return suppressed
+}
+
 // GenerateCodesRequest 生成兑换码请求
 type GenerateCodesRequest struct {
 	Count int     `json:"count"`
@@ -80,6 +98,7 @@ type RedeemService struct {
 	billingCacheService  *BillingCacheService
 	entClient            *dbent.Client
 	authCacheInvalidator APIKeyAuthCacheInvalidator
+	affiliateAccruer     AffiliateRebateAccruer
 }
 
 // NewRedeemService 创建兑换码服务实例
@@ -91,6 +110,7 @@ func NewRedeemService(
 	billingCacheService *BillingCacheService,
 	entClient *dbent.Client,
 	authCacheInvalidator APIKeyAuthCacheInvalidator,
+	affiliateAccruer AffiliateRebateAccruer,
 ) *RedeemService {
 	return &RedeemService{
 		redeemRepo:           redeemRepo,
@@ -100,6 +120,7 @@ func NewRedeemService(
 		billingCacheService:  billingCacheService,
 		entClient:            entClient,
 		authCacheInvalidator: authCacheInvalidator,
+		affiliateAccruer:     affiliateAccruer,
 	}
 }
 
@@ -323,6 +344,9 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 		if err := s.userRepo.UpdateBalance(txCtx, userID, amount); err != nil {
 			return nil, fmt.Errorf("update user balance: %w", err)
 		}
+		if err := s.accrueAffiliateRebateForBalanceRedeem(txCtx, userID, amount); err != nil {
+			return nil, err
+		}
 
 	case RedeemTypeConcurrency:
 		delta := int(redeemCode.Value)
@@ -376,6 +400,16 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 	}
 
 	return redeemCode, nil
+}
+
+func (s *RedeemService) accrueAffiliateRebateForBalanceRedeem(ctx context.Context, userID int64, amount float64) error {
+	if s == nil || s.affiliateAccruer == nil || amount <= 0 || redeemAffiliateRebateSuppressed(ctx) {
+		return nil
+	}
+	if _, err := s.affiliateAccruer.AccrueInviteRebate(ctx, userID, amount); err != nil {
+		return fmt.Errorf("accrue affiliate rebate: %w", err)
+	}
+	return nil
 }
 
 // invalidateRedeemCaches 失效兑换相关的缓存

@@ -522,6 +522,7 @@ var ProviderSet = wire.NewSet(
 	NewAccountSharePolicyService,
 	NewProxyService,
 	NewRedeemService,
+	wire.Bind(new(AffiliateRebateAccruer), new(*AffiliateService)),
 	NewPromoService,
 	NewUsageService,
 	NewDashboardService,
